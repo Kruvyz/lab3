@@ -1,0 +1,87 @@
+<html>
+<head>
+  <style>
+  #map {
+    height: 100%;
+    width: 100%;
+  }
+  body {
+    padding: 0;
+    margin: 0;
+  }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+   <script>
+     const COORDINATE = {lat: 49.35877, lng: 30.88907}
+     var map, marker;
+
+     function initMap() {
+       map = new google.maps.Map(document.getElementById('map'), {
+         center: COORDINATE,
+         zoom: 6
+       });
+
+       map.addListener('click', function(event) {
+         placeMarker(event.latLng);
+       });
+     }
+
+     function placeMarker(location) {
+       getWeather(location)
+        .then((json) => {
+          const main = json.main;
+          const weather = json.weather[0];
+          const icon = `http://openweathermap.org/img/w/${weather.icon}.png`;
+          const contentString = `Температура повітря: ${Math.round(main.temp - 273.15)}°C<br>
+                                 Вологість: ${main.humidity}%<br>
+                                 Швидкiсть вітру: ${json.wind.speed}м/с<br>
+                                 Відсоток закритого неба: ${json.clouds.all}%`;
+
+
+           createMarker(location, weather, icon);
+           createInfoWindow(contentString);
+        })
+     }
+
+     function createMarker(location, weather, icon) {
+       if (marker && marker.setMap) {
+         marker.setMap(null);
+       }
+
+       marker = new google.maps.Marker({
+          position: location,
+          map: map,
+          label: {
+               text: weather.main,
+               color: 'blue'
+          },
+          icon: {
+            url: icon,
+            labelOrigin: new google.maps.Point(30, 40)
+          }
+        });
+     }
+
+     function createInfoWindow(contentString) {
+       let infoWindow = new google.maps.InfoWindow({
+         content: contentString
+       });
+
+       marker.addListener('click', function() {
+        infoWindow.open(map, marker);
+      });
+     }
+
+     function getWeather(location) {
+       const API_KEY = '8b55cc8d48eb884c83251946930bc0d5';
+       let url = `http://api.openweathermap.org/data/2.5/weather?lat=${location.lat()}&lon=${location.lng()}&appid=${API_KEY}`;
+       return fetch (url)
+        .then((response) => response.json());
+     }
+   </script>
+   <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDL2Y_0AD5a03m5YcVOCPZ6tb-P3qHyNDE&callback=initMap"
+   async defer></script>
+</body>
+</html>
